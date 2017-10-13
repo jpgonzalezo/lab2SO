@@ -9,7 +9,7 @@ int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int pos
 void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY);
 
 
-int main(int argc, char const *argv[]){
+int main(int argc, char **argv){
 	
 	char *file = NULL;
 	int numeroHebras = 0;
@@ -20,12 +20,13 @@ int main(int argc, char const *argv[]){
 	int bandera=0;
 	int c;
 
-	char **tablero=NULL
+	char **tablero=NULL;
 
 	opterr = 0;
 	//i: archivo, h: numero de hebras, c: cantidad de palabras,
 	//n: ancho matriz, m:largo matriz s: nombreArchivoSalida d: bandera
 	while ((c = getopt (argc, argv, "i:h:c:n:m:s:d:")) != -1){
+
 		switch (c){
 			case 'i':
 				file = optarg;
@@ -46,7 +47,7 @@ int main(int argc, char const *argv[]){
 				salida = optarg;
 				break;
 			case 'd':
-				bandera = ataoi(optarg);
+				bandera = atoi(optarg);
 				break;
 			case '?':
 				if (optopt == 'c')
@@ -78,8 +79,8 @@ int main(int argc, char const *argv[]){
 //Entradas: la cantidad de filas (N) y la cantidad de columnas (M) que debe poseer el tablero
 //Salida: un tablero de dimensiones NXM inicializados por caracteres por defectos  como caso valido, y NULL en caso contrario
 char **crearTableroDinamico(int N, int M){
-	char **tablero=NULL
-	int i,j;
+	char **tablero=NULL;
+	int i, j;
 	if (N>0 && M<0){
 		tablero=(char **)malloc(sizeof(char*)*N);
 		for (i = 0; i <N ; ++i){
@@ -108,7 +109,7 @@ int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int pos
 	//contador que lleva "conteo" de los espacios validos para insertar la palabra
 	int contador=0;
 	int validador=0;
-	int i
+	int i;
 	if (posicionX<N && posicionY<M){
 		for (i = 0; i <largoPalabra; ++i){
 			if (tablero[posicionX][posicionY+i]=='0'){
