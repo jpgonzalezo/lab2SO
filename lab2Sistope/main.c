@@ -7,7 +7,7 @@
 char **crearTableroDinamico(int N, int M);
 int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int posicionY, int N, int M);
 void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY);
-
+void printTablero(char **tablero, int N, int M);
 
 int main(int argc, char **argv){
 	
@@ -71,7 +71,8 @@ int main(int argc, char **argv){
 
 
 	//creación del tablero a partir de las dimensiones de entrada
-	tablero=crearTableroDinamico(N,M);
+	tablero = crearTableroDinamico(N,M);
+	printTablero(tablero, N, M);
 }
 
 
@@ -81,7 +82,7 @@ int main(int argc, char **argv){
 char **crearTableroDinamico(int N, int M){
 	char **tablero=NULL;
 	int i, j;
-	if (N>0 && M<0){
+	if (N>0 && M>0){
 		tablero=(char **)malloc(sizeof(char*)*N);
 		for (i = 0; i <N ; ++i){
 			tablero[i]=(char*)malloc(sizeof(char)*M);
@@ -133,5 +134,16 @@ void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY){
 	int i;
 	for (i = 0; i < largoPalabra; ++i){
 		tablero[posX][posY+i]=palabra[i];
+	}
+}
+
+void printTablero(char **tablero, int N, int M)
+{
+	int i,j;
+	for (i = 0; i < N; ++i){
+		for (j = 0; j < M; ++j){
+			printf("%c", tablero[i][j]);	
+		}
+		printf("\n");
 	}
 }
