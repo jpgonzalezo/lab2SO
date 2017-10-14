@@ -91,7 +91,7 @@ int main(int argc, char **argv){
 
 	//creación del tablero a partir de las dimensiones de entrada
 	tablero = crearTableroDinamico(N,M);
-	printTablero(tablero, N, M);
+	//printTablero(tablero, N, M);
 
 	//Se crean las hebras
 	pthread_t threads[numeroHebras];
@@ -109,7 +109,7 @@ int main(int argc, char **argv){
 	//insertarPalabra("MANZANA", tablero, 2, 3, N, M);
 	//insertarPalabra("HOLA", tablero, 2, 1, N, M);
 	//printf("--------------------\n");
-	//printTablero(tablero, N, M);
+	printTablero(tablero, N, M);
 	
 
 
@@ -206,8 +206,8 @@ void printTablero(char **tablero, int N, int M)
 //Función que crea las hebras
 void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M)
 {
-	int posX = 2;
-	int posY = 3;
+	char palabra[4];
+	strcpy(palabra, "HOLA");
 	struct Thread *thread_data;
 
 	int i = 0;
@@ -215,6 +215,13 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	{
 		thread_data = malloc(sizeof(struct Thread));
 		thread_data->id = i;
+		thread_data->palabra = palabra;
+		thread_data->tablero = tablero;
+		thread_data->posX = rand() % N-1;
+		thread_data->posY = rand() % M-1;
+		thread_data->N = N;
+		thread_data->M = M;
+
 		pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
 		i++;
 	}
@@ -245,6 +252,8 @@ void *ubicar(void *arg)
 {
 	struct Thread *thread_data = (struct Thread *) arg;
 	printf("Hola, soy la hebra %d\n", thread_data->id);
+	insertarPalabra(thread_data->palabra, thread_data->tablero, thread_data->posX, 
+					thread_data->posY, thread_data->N, thread_data->M);
 	free(thread_data);
 
 //	pthread_exit("Exit");
