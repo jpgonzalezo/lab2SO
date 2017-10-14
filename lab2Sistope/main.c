@@ -26,7 +26,7 @@ void printTablero(char **tablero, int N, int M);
 void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M);
 void *threadTest(void *arg);
 void waitHebras(pthread_t threads[], int numeroHebras);
-void insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M);
+int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M);
 void *ubicar(void *arg);
 
 int main(int argc, char **argv){
@@ -87,6 +87,7 @@ int main(int argc, char **argv){
 	printf("cantidadPalabras: %d\n", cantidadPalabras );
 	printf("filas: %d\n",N);
 	printf("columnas: %d\n",M);
+	srand(time(NULL));		//seed para usar rand aleatorio
 
 
 	//creación del tablero a partir de las dimensiones de entrada
@@ -209,7 +210,6 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	char palabra[4];
 	strcpy(palabra, "HOLA");
 	struct Thread *thread_data;
-
 	int i = 0;
 	while(i < numeroHebras)
 	{
@@ -239,12 +239,15 @@ void waitHebras(pthread_t threads[], int numeroHebras)
 }
 
 //Función que inserta una palabra en la sopa de letras
-void insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M)
+int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M)
 {
 	if(validarPosicionInicial(palabra, tablero, posX, posY, N, M))
 	{
 		insertarAuxiliar(palabra, tablero, posX, posY);
+		return 1;	//Se pudo insertar palabra
 	}
+
+	return 0;		//No se pudo insertar palabra
 }
 
 //
@@ -252,7 +255,13 @@ void *ubicar(void *arg)
 {
 	struct Thread *thread_data = (struct Thread *) arg;
 	printf("Hola, soy la hebra %d\n", (int) thread_data->tid);
-	insertarPalabra(thread_data->palabra, thread_data->tablero, thread_data->posX, 
-					thread_data->posY, thread_data->N, thread_data->M);
-	free(thread_data);
+	while(1)
+	{
+		if(insertarPalabra(thread_data->palabra, thread_data->tablero, thread_data->posX,
+						thread_data->posY, thread_data->N, thread_data->M))
+		{
+			break;		//Si se logra insertar la palabra se termina el while.
+		}
+	}
+	free(thread_data);		//se libera mem
 }
