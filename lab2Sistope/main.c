@@ -216,8 +216,6 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 		thread_data = malloc(sizeof(struct Thread));
 		thread_data->id = i;
 		pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
-
-		printf("Hebra creada\n");
 		i++;
 	}
 }
