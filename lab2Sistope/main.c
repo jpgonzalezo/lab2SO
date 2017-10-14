@@ -7,13 +7,14 @@
 
 
 struct Thread {
-     pthread_t 	tid;
-     char 		*palabra;
-     char 		**tablero;
-     int 		posX;
-     int 		posY;
-     int 		N;
-     int 		M;
+     pthread_t 			tid;
+     char 				*palabra;
+     char 				**tablero;
+     int 				posX;
+     int 				posY;
+     int 				N;
+     int 				M;
+     pthread_mutex_t	mutex;
 };
 
 
