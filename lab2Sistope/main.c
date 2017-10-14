@@ -3,11 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 char **crearTableroDinamico(int N, int M);
 int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int posicionY, int N, int M);
 void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY);
 void printTablero(char **tablero, int N, int M);
+void crearHebras(pthread_t threads[], int numeroHebras);
+void *threadTest(void *arg);
+void waitHebras(pthread_t threads[], int numeroHebras);
 
 int main(int argc, char **argv){
 	
@@ -73,6 +77,14 @@ int main(int argc, char **argv){
 	//creación del tablero a partir de las dimensiones de entrada
 	tablero = crearTableroDinamico(N,M);
 	printTablero(tablero, N, M);
+
+	pthread_t threads[numeroHebras];
+	crearHebras(threads, numeroHebras);
+	waitHebras(threads, numeroHebras);
+	
+
+
+	return 0;
 }
 
 
@@ -137,6 +149,7 @@ void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY){
 	}
 }
 
+//Función que imprime la sopa de letras
 void printTablero(char **tablero, int N, int M)
 {
 	int i,j;
@@ -146,4 +159,39 @@ void printTablero(char **tablero, int N, int M)
 		}
 		printf("\n");
 	}
+}
+
+//Función que crea las hebras
+void crearHebras(pthread_t threads[], int numeroHebras)
+{
+	int i = 0;
+	while(i < numeroHebras)
+	{
+		pthread_create(&threads[i], NULL, threadTest, NULL);
+		{
+			printf("Hebra creada\n");
+			i++;
+		}
+	}
+}
+
+void waitHebras(pthread_t threads[], int numeroHebras)
+{
+	int i = 0;
+	while(i < numeroHebras)
+	{
+		pthread_join(threads[numeroHebras], NULL);
+		{
+			i++;
+		}
+	}
+}
+
+
+
+//FUNCION PARA TESTEAR HEBRAS
+void *threadTest(void *arg)
+{
+	printf("Hola, soy una hebra\n");
+	pthread_exit("Exit"); 
 }
