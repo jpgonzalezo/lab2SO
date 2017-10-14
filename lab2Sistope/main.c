@@ -7,7 +7,7 @@
 
 
 struct Thread {
-     int 		id;
+     pthread_t 	tid;
      char 		*palabra;
      char 		**tablero;
      int 		posX;
@@ -214,7 +214,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	while(i < numeroHebras)
 	{
 		thread_data = malloc(sizeof(struct Thread));
-		thread_data->id = i;
+		thread_data->tid = i;
 		thread_data->palabra = palabra;
 		thread_data->tablero = tablero;
 		thread_data->posX = rand() % N-1;
@@ -251,7 +251,7 @@ void insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, i
 void *ubicar(void *arg)
 {
 	struct Thread *thread_data = (struct Thread *) arg;
-	printf("Hola, soy la hebra %d\n", thread_data->id);
+	printf("Hola, soy la hebra %d\n", (int) thread_data->tid);
 	insertarPalabra(thread_data->palabra, thread_data->tablero, thread_data->posX, 
 					thread_data->posY, thread_data->N, thread_data->M);
 	free(thread_data);
