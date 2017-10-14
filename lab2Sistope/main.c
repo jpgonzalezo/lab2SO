@@ -255,6 +255,4 @@ void *ubicar(void *arg)
 	insertarPalabra(thread_data->palabra, thread_data->tablero, thread_data->posX, 
 					thread_data->posY, thread_data->N, thread_data->M);
 	free(thread_data);
-
-//	pthread_exit("Exit");
 }
