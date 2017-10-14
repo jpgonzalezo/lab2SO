@@ -5,13 +5,29 @@
 #include <unistd.h>
 #include <pthread.h>
 
+
+struct Thread {
+     int 		id;
+     char 		*palabra;
+     char 		**tablero;
+     int 		posX;
+     int 		posY;
+     int 		N;
+     int 		M;
+};
+
+
+
+
 char **crearTableroDinamico(int N, int M);
 int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int posicionY, int N, int M);
 void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY);
 void printTablero(char **tablero, int N, int M);
-void crearHebras(pthread_t threads[], int numeroHebras);
+void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M);
 void *threadTest(void *arg);
 void waitHebras(pthread_t threads[], int numeroHebras);
+void insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M);
+void *ubicar(void *arg);
 
 int main(int argc, char **argv){
 	
@@ -71,21 +87,46 @@ int main(int argc, char **argv){
 	printf("cantidadPalabras: %d\n", cantidadPalabras );
 	printf("filas: %d\n",N);
 	printf("columnas: %d\n",M);
-	//crear hebras a partir de la cantidad de hebras y asignar las palabras del archivo de texto 
 
 
 	//creación del tablero a partir de las dimensiones de entrada
 	tablero = crearTableroDinamico(N,M);
 	printTablero(tablero, N, M);
 
+	//Se crean las hebras
 	pthread_t threads[numeroHebras];
-	crearHebras(threads, numeroHebras);
+	crearHebras(threads, numeroHebras, tablero, N, M);
+
+
+
+
+
+
+	//El hilo main espera que terminen las hebras
 	waitHebras(threads, numeroHebras);
+	printf("Hebras terminaron\n");
+
+	//insertarPalabra("MANZANA", tablero, 2, 3, N, M);
+	//insertarPalabra("HOLA", tablero, 2, 1, N, M);
+	//printf("--------------------\n");
+	//printTablero(tablero, N, M);
 	
 
 
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //Descripción: Función que crea el tablero base en el cual se irán insertando las palabras por las hebras
@@ -114,8 +155,9 @@ char **crearTableroDinamico(int N, int M){
 	}
 }
 
-//Desricpion: Función que se encarga de validar si la posicion inicial es valida para poder inserar la palabra
-//Entrada: La palabra que se desea insertar, el tablero donde se inserta la palabra, la posicion X donde se comienza a insertar la palabra, la posicion Y donde se comienza a insertar la palabra
+//Función que se encarga de validar si la posicion inicial es valida para poder inserar la palabra
+//Entrada: La palabra que se desea insertar, el tablero donde se inserta la palabra, la posicion X donde se comienza a insertar la palabra,
+//la posicion Y donde se comienza a insertar la palabra
 //la cantidad de filas que posee el tablero, la cantidad de columnas que posee el tablero
 int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int posicionY, int N, int M){
 	int largoPalabra=strlen(palabra);
@@ -162,36 +204,50 @@ void printTablero(char **tablero, int N, int M)
 }
 
 //Función que crea las hebras
-void crearHebras(pthread_t threads[], int numeroHebras)
+void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M)
 {
+	int posX = 2;
+	int posY = 3;
+	struct Thread *thread_data;
+
 	int i = 0;
 	while(i < numeroHebras)
 	{
-		pthread_create(&threads[i], NULL, threadTest, NULL);
-		{
-			printf("Hebra creada\n");
-			i++;
-		}
+		thread_data = malloc(sizeof(struct Thread));
+		thread_data->id = i;
+		pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
+
+		printf("Hebra creada\n");
+		i++;
 	}
 }
 
+//Función que espera que terminen las hebras hijas
 void waitHebras(pthread_t threads[], int numeroHebras)
 {
 	int i = 0;
 	while(i < numeroHebras)
 	{
-		pthread_join(threads[numeroHebras], NULL);
-		{
-			i++;
-		}
+		pthread_join(threads[i], NULL);
+		i++;
 	}
 }
 
-
-
-//FUNCION PARA TESTEAR HEBRAS
-void *threadTest(void *arg)
+//Función que inserta una palabra en la sopa de letras
+void insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M)
 {
-	printf("Hola, soy una hebra\n");
-	pthread_exit("Exit"); 
+	if(validarPosicionInicial(palabra, tablero, posX, posY, N, M))
+	{
+		insertarAuxiliar(palabra, tablero, posX, posY);
+	}
+}
+
+//
+void *ubicar(void *arg)
+{
+	struct Thread *thread_data = (struct Thread *) arg;
+	printf("Hola, soy la hebra %d\n", thread_data->id);
+	free(thread_data);
+
+//	pthread_exit("Exit");
 }
