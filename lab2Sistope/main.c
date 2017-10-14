@@ -10,12 +10,14 @@ struct Thread {
      pthread_t 			tid;
      char 				*palabra;
      char 				**tablero;
-//     int 				posX;
-//     int 				posY;
+     int 				posX;
+     int 				posY;
      int 				N;
      int 				M;
      pthread_mutex_t	mutexHilo;
 };
+
+pthread_mutex_t mutex;	//mutex global, solo para testear.
 
 
 
@@ -218,8 +220,8 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 		thread_data->tid = i;
 		thread_data->palabra = palabra;
 		thread_data->tablero = tablero;
-//		thread_data->posX = rand() % N-1;
-//		thread_data->posY = rand() % M-1;
+		thread_data->posX = rand() % N-1;
+		thread_data->posY = rand() % M-1;
 		thread_data->N = N;
 		thread_data->M = M;
 		pthread_mutex_init(&thread_data->mutexHilo, NULL);
@@ -257,15 +259,20 @@ void *ubicar(void *arg)
 {
 	struct Thread *thread_data = (struct Thread *) arg;
 	//sleep(2);
-	//pthread_mutex_lock(&thread_data->mutexHilo);
 	printf("Hola, soy la hebra %d\n", (int) thread_data->tid);
+	pthread_mutex_lock(&mutex);
+	printf("Hebra %d entró a SC\n", (int) thread_data->tid);
 	while(1)
 	{
-		if(insertarPalabra(	thread_data->palabra, thread_data->tablero, rand() % thread_data->N-1,
-							rand() % thread_data->M-1, thread_data->N, thread_data->M))
+		if(insertarPalabra(	thread_data->palabra, thread_data->tablero, thread_data->posX,
+							thread_data->posY, thread_data->N, thread_data->M))
 		{
+			pthread_mutex_unlock(&mutex);
 			break;		//Si se logra insertar la palabra se termina el while.
 		}
+		thread_data->posX = rand() % (thread_data->N)-1;	//Se intenta con otra posición random
+		thread_data->posY = rand() % (thread_data->M)-1;
 	}
+
 	free(thread_data);		//se libera mem
 }
