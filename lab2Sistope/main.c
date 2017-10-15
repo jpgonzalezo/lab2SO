@@ -9,13 +9,9 @@
 pthread_mutex_t mutex;	//mutex global, solo para testear.
 
 
-
-
-
-
 int main(int argc, char **argv){
 	
-	char *file = NULL;
+	char *nameArchivo = NULL;
 	int numeroHebras = 0;
 	int cantidadPalabras = 0;
 	int N = 0;
@@ -33,7 +29,7 @@ int main(int argc, char **argv){
 
 		switch (c){
 			case 'i':
-				file = optarg;
+				nameArchivo = optarg;
 				break;
 			case 'h':
 				numeroHebras = atoi(optarg);
@@ -67,10 +63,12 @@ int main(int argc, char **argv){
 	}
 
 	//Prueba de que los argumentos fueron guardados correctamente 
+	printf("dsadasdas\n");
 	printf("numeroHebras: %d\n",numeroHebras);
 	printf("cantidadPalabras: %d\n", cantidadPalabras );
 	printf("filas: %d\n",N);
 	printf("columnas: %d\n",M);
+
 	srand(time(NULL));		//seed para usar rand aleatorio
 
 
@@ -80,15 +78,18 @@ int main(int argc, char **argv){
 
 	//Se crean las hebras
 	pthread_t threads[numeroHebras];
-	crearHebras(threads, numeroHebras, tablero, N, M);
-
-
+	printf("creando hebras\n");
+	crearHebras(threads, numeroHebras, tablero, N, M, nameArchivo, cantidadPalabras);
+	printf("termine de crear hebras\n");
 
 
 
 
 	//El hilo main espera que terminen las hebras
-	waitHebras(threads, numeroHebras);
+	if (numeroHebras<cantidadPalabras){
+		waitHebras(threads, numeroHebras);
+	}
+
 	printf("Hebras terminaron\n");
 
 	//insertarPalabra("MANZANA", tablero, 2, 3, N, M);

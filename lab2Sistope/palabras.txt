@@ -1,0 +1,6 @@
+frutilla
+mango
+kiwi
+piña
+uva
+manzana

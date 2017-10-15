@@ -1,12 +1,17 @@
+typedef struct{
+
+	int posX;
+	int posY;
+}coordenada;
 
 struct Thread {
      pthread_t 			tid;
-     char 				*palabra;
+     char 				**palabra;
      char 				**tablero;
-     int 				posX;
-     int 				posY;
+     coordenada 		*coordenadas;
      int 				N;
      int 				M;
+     int  				cantidadPalabras;
      pthread_mutex_t	mutexHilo;
 };
 
@@ -17,12 +22,12 @@ char **crearTableroDinamico(int N, int M);
 int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int posicionY, int N, int M);
 void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY);
 void printTablero(char **tablero, int N, int M);
-void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M);
+void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M,char *file, int cantidadPalabras);
 void *threadTest(void *arg);
 void waitHebras(pthread_t threads[], int numeroHebras);
 int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M);
 void *ubicar(void *arg);
-
+int countLines(char *fileName, int lineSize);
 
 //Descripción: Función que crea el tablero base en el cual se irán insertando las palabras por las hebras
 //Entradas: la cantidad de filas (N) y la cantidad de columnas (M) que debe poseer el tablero
@@ -99,27 +104,95 @@ void printTablero(char **tablero, int N, int M)
 }
 
 //Función que crea las hebras
-void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M)
+void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M, char *file, int cantidadPalabras)
 {
-	char palabra[4];
-	strcpy(palabra, "HOLA");
+	
 	struct Thread *thread_data;
 	int i = 0;
-	while(i < numeroHebras)
-	{
-		thread_data = malloc(sizeof(struct Thread));
-		thread_data->tid = i;
-		thread_data->palabra = palabra;
-		thread_data->tablero = tablero;
-		thread_data->posX = rand() % N-1;
-		thread_data->posY = rand() % M-1;
-		thread_data->N = N;
-		thread_data->M = M;
-		pthread_mutex_init(&thread_data->mutexHilo, NULL);
+	int impar=0;
+	int palabrasPorHebra=0;
+	int palabrasArchivo= countLines(file, 100);
 
-		pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
-		i++;
+	//Necesario para leer el archivo para asignar palabras
+	FILE *archivoTexto;
+	archivoTexto = fopen(file, "r");
+	char line[20];
+
+
+	//Todas las hebras tienen la misma cantidad de palabras para insertar
+	if (cantidadPalabras%numeroHebras==0){
+		palabrasPorHebra=cantidadPalabras/numeroHebras;
 	}
+	//La cantidad de palabras es impar
+	else{
+		impar=1;
+		palabrasPorHebra=cantidadPalabras/numeroHebras;
+	}
+
+
+	//Si el numero de hebras es mayor que la cantidad de palabras existentes entonces hay un error
+	if (numeroHebras>cantidadPalabras || palabrasArchivo!=cantidadPalabras){
+		printf("Error: EL numero de hebras es mayor que la cantidad de palabras\n");
+	}
+
+	//caso contrario se deben guardar las palabras para la hebra
+	else{
+		printf("\n");
+		printf("\n");
+		while(i < numeroHebras){
+			int j;
+			thread_data = malloc(sizeof(struct Thread));
+			thread_data->tid = i;
+
+			int contadorPalabras=0;
+
+			if (impar==1 && i==numeroHebras-1){
+				palabrasPorHebra=palabrasPorHebra+1;
+			}
+
+			thread_data->coordenadas=(coordenada*)malloc(sizeof(char)*palabrasPorHebra);
+			thread_data->palabra=(char**)malloc(sizeof(char*)*palabrasPorHebra);
+			for (j = 0; j < palabrasPorHebra; ++j)
+			{
+				thread_data->palabra[j]=(char*)malloc(sizeof(char)*20);
+				thread_data->palabra[j]=fgets(line, 100,archivoTexto);
+				printf("guarde la palabra: %s\n", thread_data->palabra[j]);
+				int posX=rand() % N-1;
+				int posY=rand()	% M-1;
+				int validador= validarPosicionInicial(thread_data->palabra[j], tablero, posX, posY, N, M);
+				while(validador==0){
+					int posX=rand() % N-1;
+					int posY=rand()	% M-1;
+					validador= validarPosicionInicial(thread_data->palabra[j], tablero, posX, posY, N, M);
+				}
+
+				thread_data->coordenadas[j].posX=posX;
+				thread_data->coordenadas[j].posY=posY;
+
+			}
+
+			printf("guarde la palabra2: %s\n", thread_data->palabra[0]);
+			thread_data->tablero = tablero;
+			thread_data->N = N;
+			thread_data->M = M;
+			thread_data->cantidadPalabras=palabrasPorHebra;
+			
+			
+			printf("Soy la hebra: %d\n", (int )thread_data->tid);
+			printf("tengo que colocar las palabras:\n");
+			for (int z = 0; z < palabrasPorHebra; ++z){
+				printf("%s\n",thread_data->palabra[z] );
+			}
+			printf("\n");
+			printf("\n");
+			pthread_mutex_init(&thread_data->mutexHilo, NULL);
+			pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
+			i++;
+		}		
+	}
+
+	fclose(archivoTexto);
+
 }
 
 //Función que espera que terminen las hebras hijas
@@ -148,22 +221,33 @@ int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, in
 //
 void *ubicar(void *arg)
 {
+	int w;
 	struct Thread *thread_data = (struct Thread *) arg;
-	//sleep(2);
-	printf("Hola, soy la hebra %d\n", (int) thread_data->tid);
+	printf("Hola, soy la hebra %d \n", (int) thread_data->tid);
 	pthread_mutex_lock(&mutex);
 	printf("Hebra %d entró a SC\n", (int) thread_data->tid);
-	while(1)
-	{
-		if(insertarPalabra(	thread_data->palabra, thread_data->tablero, thread_data->posX,
-							thread_data->posY, thread_data->N, thread_data->M))
-		{
-			pthread_mutex_unlock(&mutex);
-			break;		//Si se logra insertar la palabra se termina el while.
-		}
-		thread_data->posX = rand() % (thread_data->N)-1;	//Se intenta con otra posición random
-		thread_data->posY = rand() % (thread_data->M)-1;
+	for (w = 0; w < thread_data->cantidadPalabras ; ++w){
+		insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
+		thread_data->coordenadas[w].posY);
+		printf("inserte la palabra: %s \n",thread_data->palabra[w]);
+		printTablero(thread_data->tablero, thread_data->N, thread_data->M);
 	}
-
+	pthread_mutex_unlock(&mutex);
 	free(thread_data);		//se libera mem
+}
+
+int countLines(char *fileName, int lineSize)	//Función que cuenta las lineas del archivo de entrada
+{
+	FILE *file;
+	file = fopen(fileName, "r");
+	int count = 0;
+	char line[lineSize];
+	char c;
+	while(feof(file)==0)
+	{
+		fgets(line, 100,file);
+		count++;
+	}
+	fclose(file);
+	return count-1;
 }
