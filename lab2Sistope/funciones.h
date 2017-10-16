@@ -12,10 +12,14 @@ typedef struct {
      int 				N;
      int 				M;
      int  				cantidadPalabras;
-     pthread_mutex_t	mutexHilo;
+     pthread_mutex_t	*mutexHilo;
 }hebra;
 
-pthread_mutex_t mutex;	//mutex global, solo para testear.
+//pthread_mutex_t mutex;	//mutex global, solo para testear.
+//Se crea el mutex
+
+
+pthread_mutex_t **mutex;
 
 
 char **crearTableroDinamico(int N, int M);
@@ -116,10 +120,20 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	int palabrasPorHebra=0;
 	int palabrasArchivo= countLines(file, 100);
 
+	//Asignación memoria mutex global
+	mutex=(pthread_mutex_t **)malloc(sizeof(pthread_mutex_t*)*N);
+	for (int i = 0; i <N; ++i){
+		mutex[i]=(pthread_mutex_t*)malloc(sizeof(pthread_mutex_t)*M);
+		for (int j = 0; j < M; ++j){
+
+			pthread_mutex_init(&mutex[i][j], NULL);			
+		}
+	}
+
 	//Necesario para leer el archivo para asignar palabras
 	FILE *archivoTexto;
 	archivoTexto = fopen(file, "r");
-	char line[9];
+	char line[100];
 
 	//Todas las hebras tienen la misma cantidad de palabras para insertar
 	if (cantidadPalabras%numeroHebras==0){
@@ -156,8 +170,8 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			thread_data->palabra=(char**)malloc(sizeof(char*)*palabrasPorHebra);
 			for (j = 0; j < palabrasPorHebra; ++j)
 			{
-				thread_data->palabra[j]=(char*)malloc(sizeof(char)*9);
-				fgets(line, 9,archivoTexto);
+				thread_data->palabra[j]=(char*)malloc(sizeof(char)*100);
+				fgets(line, 100,archivoTexto);
 				printf("palabra obtenida desde el archivo %s\n",line);
 				line[strcspn(line, "\n")] = 0;
 				strcpy(thread_data->palabra[j], line);
@@ -183,7 +197,8 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			}
 			printf("\n");
 			printf("\n");
-			pthread_mutex_init(&thread_data->mutexHilo, NULL);
+			//pthread_mutex_init(&thread_data->mutexHilo, NULL);
+			thread_data->mutexHilo = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t)*palabrasPorHebra);
 			pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
 			i++;
 		}		
@@ -224,34 +239,53 @@ void *ubicar(void *arg)
 	hebra *thread_data = (hebra *) arg;
 	//printf("Hola, soy la hebra %d \n", (int) thread_data->tid);
 	//pthread_mutex_lock(&mutex);
-	pthread_mutex_lock(&mutex);
+	//pthread_mutex_lock(&mutex);
 	printf("Hebra %d entró a SC\n", (int) thread_data->tid);
 	for (w = 0; w < thread_data->cantidadPalabras ; ++w){
 		printf("dsadasdda\n");
 		//insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
 		//thread_data->coordenadas[w].posY);
-
-		int intentos=10;
-
-		while(insertarPalabra(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,thread_data->coordenadas[w].posY, thread_data->N, thread_data->M) == 0 ){
-			if (intentos>0){
-				thread_data->coordenadas[w].posX= rand() % thread_data->N;
-				thread_data->coordenadas[w].posY=rand() % thread_data->M;
-			}
-
-			else{
-				break;
-			}
-			printf("intento n: %d\n",intentos );
-			intentos--;
+		thread_data->mutexHilo[w] = mutex[thread_data->coordenadas[w].posX][thread_data->coordenadas[w].posY];
+		while(validarPosicionInicial(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX, thread_data->coordenadas[w].posY, thread_data->N, thread_data->M)==0)
+		{
+			thread_data->coordenadas[w].posX= rand() % thread_data->N;
+			thread_data->coordenadas[w].posY=rand() % thread_data->M;
+			thread_data->mutexHilo[w] = mutex[thread_data->coordenadas[w].posX][thread_data->coordenadas[w].posY];
+			if(pthread_mutex_trylock(&thread_data->mutexHilo[w])==0) break;
 		}
+
+		pthread_mutex_trylock(&thread_data->mutexHilo[w]);
+		insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX, thread_data->coordenadas[w].posY);
+		pthread_mutex_unlock(&thread_data->mutexHilo[w]);
+
+
+
+
+
+
+
+
+		// int intentos=10;
+
+		// while(insertarPalabra(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,thread_data->coordenadas[w].posY, thread_data->N, thread_data->M) == 0 ){
+		// 	if (intentos>0){
+		// 		thread_data->coordenadas[w].posX= rand() % thread_data->N;
+		// 		thread_data->coordenadas[w].posY=rand() % thread_data->M;
+		// 	}
+
+		// 	else{
+		// 		break;
+		// 	}
+		// 	printf("intento n: %d\n",intentos );
+		// 	intentos--;
+		// }
 		printf("inserte la palabra: %s \n",thread_data->palabra[w]);
 		printTablero(thread_data->tablero, thread_data->N, thread_data->M);
 	}
 	//pthread_mutex_unlock(&mutex);
 	
 	free(thread_data);		//se libera mem
-	pthread_mutex_unlock(&mutex);
+	//pthread_mutex_unlock(&mutex);
 }
 
 void enterSC(pthread_mutex_t mutex)

@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include "funciones.h"
 
-pthread_mutex_t mutex;	//mutex global, solo para testear.
+//pthread_mutex_t mutex;	//mutex global, solo para testear.
 
 
 int main(int argc, char **argv){
@@ -74,6 +74,9 @@ int main(int argc, char **argv){
 	//creación del tablero a partir de las dimensiones de entrada
 	tablero = crearTableroDinamico(N,M);
 	//printTablero(tablero, N, M);
+
+
+
 
 	//Se crean las hebras
 	pthread_t threads[numeroHebras];
