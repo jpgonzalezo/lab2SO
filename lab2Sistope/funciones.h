@@ -87,6 +87,7 @@ int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int pos
 //FUNCION AUXILIAR PARA TENER LA IDEA DE INSERTAR UNA PALABRA SIN IMPLEMENTACION DE HEBRAS 
 void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY){
 	int largoPalabra=strlen(palabra);
+	printf("largoPalabra insertarAuxiliar: %d\n",largoPalabra );
 	int i;
 	for (i = 0; i < largoPalabra; ++i){
 		tablero[posX][posY+i]=palabra[i];
@@ -157,17 +158,12 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			{
 				thread_data->palabra[j]=(char*)malloc(sizeof(char)*9);
 				fgets(line, 9,archivoTexto);
+				printf("palabra obtenida desde el archivo %s\n",line);
+				line[strcspn(line, "\n")] = 0;
 				strcpy(thread_data->palabra[j], line);
 				//printf("guarde la palabra %d: %s\n",j,thread_data->palabra[j]);
-				int posX=rand() % N-1;
-				int posY=rand()	% M-1;
-				int validador= validarPosicionInicial(thread_data->palabra[j], tablero, posX, posY, N, M);
-				while(validador==0){
-					int posX=rand() % N-1;
-					int posY=rand()	% M-1;
-					validador= validarPosicionInicial(thread_data->palabra[j], tablero, posX, posY, N, M);
-				}
-
+				int posX=rand() % N;
+				int posY=rand()	% M;
 				thread_data->coordenadas[j].posX=posX;
 				thread_data->coordenadas[j].posY=posY;
 
@@ -231,10 +227,24 @@ void *ubicar(void *arg)
 	pthread_mutex_lock(&mutex);
 	printf("Hebra %d entró a SC\n", (int) thread_data->tid);
 	for (w = 0; w < thread_data->cantidadPalabras ; ++w){
+		printf("dsadasdda\n");
 		//insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
 		//thread_data->coordenadas[w].posY);
-		insertarPalabra(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
-						thread_data->coordenadas[w].posY, thread_data->N, thread_data->M);
+
+		int intentos=10;
+
+		while(insertarPalabra(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,thread_data->coordenadas[w].posY, thread_data->N, thread_data->M) == 0 ){
+			if (intentos>0){
+				thread_data->coordenadas[w].posX= rand() % thread_data->N;
+				thread_data->coordenadas[w].posY=rand() % thread_data->M;
+			}
+
+			else{
+				break;
+			}
+			printf("intento n: %d\n",intentos );
+			intentos--;
+		}
 		printf("inserte la palabra: %s \n",thread_data->palabra[w]);
 		printTablero(thread_data->tablero, thread_data->N, thread_data->M);
 	}

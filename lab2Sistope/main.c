@@ -68,7 +68,7 @@ int main(int argc, char **argv){
 	printf("filas: %d\n",N);
 	printf("columnas: %d\n",M);
 
-	srand(time(NULL));		//seed para usar rand aleatorio
+	srand((unsigned)time(NULL));		//seed para usar rand aleatorio
 
 
 	//creación del tablero a partir de las dimensiones de entrada
