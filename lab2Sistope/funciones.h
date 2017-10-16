@@ -4,7 +4,7 @@ typedef struct{
 	int posY;
 }coordenada;
 
-struct Thread {
+typedef struct {
      pthread_t 			tid;
      char 				**palabra;
      char 				**tablero;
@@ -13,7 +13,7 @@ struct Thread {
      int 				M;
      int  				cantidadPalabras;
      pthread_mutex_t	mutexHilo;
-};
+}hebra;
 
 pthread_mutex_t mutex;	//mutex global, solo para testear.
 
@@ -28,6 +28,8 @@ void waitHebras(pthread_t threads[], int numeroHebras);
 int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M);
 void *ubicar(void *arg);
 int countLines(char *fileName, int lineSize);
+void enterSC(pthread_mutex_t mutex);
+void exitSC(pthread_mutex_t mutex);
 
 //Descripción: Función que crea el tablero base en el cual se irán insertando las palabras por las hebras
 //Entradas: la cantidad de filas (N) y la cantidad de columnas (M) que debe poseer el tablero
@@ -107,7 +109,7 @@ void printTablero(char **tablero, int N, int M)
 void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M, char *file, int cantidadPalabras)
 {
 	
-	struct Thread *thread_data;
+	hebra *thread_data;
 	int i = 0;
 	int impar=0;
 	int palabrasPorHebra=0;
@@ -116,7 +118,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	//Necesario para leer el archivo para asignar palabras
 	FILE *archivoTexto;
 	archivoTexto = fopen(file, "r");
-	char line[20];
+	char line[100];
 
 
 	//Todas las hebras tienen la misma cantidad de palabras para insertar
@@ -141,7 +143,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 		printf("\n");
 		while(i < numeroHebras){
 			int j;
-			thread_data = malloc(sizeof(struct Thread));
+			thread_data = malloc(sizeof(hebra));
 			thread_data->tid = i;
 
 			int contadorPalabras=0;
@@ -154,9 +156,10 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			thread_data->palabra=(char**)malloc(sizeof(char*)*palabrasPorHebra);
 			for (j = 0; j < palabrasPorHebra; ++j)
 			{
-				thread_data->palabra[j]=(char*)malloc(sizeof(char)*20);
-				thread_data->palabra[j]=fgets(line, 100,archivoTexto);
-				printf("guarde la palabra: %s\n", thread_data->palabra[j]);
+				thread_data->palabra[j]=(char*)malloc(sizeof(char)*100);
+				fgets(line, 100,archivoTexto);
+				strcpy(thread_data->palabra[j], line);
+				printf("guarde la palabra %d: %s\n",j,thread_data->palabra[j]);
 				int posX=rand() % N-1;
 				int posY=rand()	% M-1;
 				int validador= validarPosicionInicial(thread_data->palabra[j], tablero, posX, posY, N, M);
@@ -181,7 +184,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			printf("Soy la hebra: %d\n", (int )thread_data->tid);
 			printf("tengo que colocar las palabras:\n");
 			for (int z = 0; z < palabrasPorHebra; ++z){
-				printf("%s\n",thread_data->palabra[z] );
+				printf("%d: %s\n",z,thread_data->palabra[z] );
 			}
 			printf("\n");
 			printf("\n");
@@ -221,10 +224,12 @@ int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, in
 //
 void *ubicar(void *arg)
 {
+	enterSC(mutex);
 	int w;
-	struct Thread *thread_data = (struct Thread *) arg;
+	hebra *thread_data = (hebra *) arg;
 	printf("Hola, soy la hebra %d \n", (int) thread_data->tid);
-	pthread_mutex_lock(&mutex);
+	//pthread_mutex_lock(&mutex);
+	
 	printf("Hebra %d entró a SC\n", (int) thread_data->tid);
 	for (w = 0; w < thread_data->cantidadPalabras ; ++w){
 		insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
@@ -232,8 +237,21 @@ void *ubicar(void *arg)
 		printf("inserte la palabra: %s \n",thread_data->palabra[w]);
 		printTablero(thread_data->tablero, thread_data->N, thread_data->M);
 	}
-	pthread_mutex_unlock(&mutex);
+	//pthread_mutex_unlock(&mutex);
+	
 	free(thread_data);		//se libera mem
+	exitSC(mutex);
+}
+
+void enterSC(pthread_mutex_t mutex)
+{
+	while(pthread_mutex_trylock(&mutex)==0)
+	{}
+}
+
+void exitSC(pthread_mutex_t mutex)
+{
+	pthread_mutex_unlock(&mutex);
 }
 
 int countLines(char *fileName, int lineSize)	//Función que cuenta las lineas del archivo de entrada

@@ -63,7 +63,6 @@ int main(int argc, char **argv){
 	}
 
 	//Prueba de que los argumentos fueron guardados correctamente 
-	printf("dsadasdas\n");
 	printf("numeroHebras: %d\n",numeroHebras);
 	printf("cantidadPalabras: %d\n", cantidadPalabras );
 	printf("filas: %d\n",N);
