@@ -159,7 +159,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 				thread_data->palabra[j]=(char*)malloc(sizeof(char)*100);
 				fgets(line, 100,archivoTexto);
 				strcpy(thread_data->palabra[j], line);
-				printf("guarde la palabra %d: %s\n",j,thread_data->palabra[j]);
+				//printf("guarde la palabra %d: %s\n",j,thread_data->palabra[j]);
 				int posX=rand() % N-1;
 				int posY=rand()	% M-1;
 				int validador= validarPosicionInicial(thread_data->palabra[j], tablero, posX, posY, N, M);
@@ -174,7 +174,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 
 			}
 
-			printf("guarde la palabra2: %s\n", thread_data->palabra[0]);
+			//printf("guarde la palabra2: %s\n", thread_data->palabra[0]);
 			thread_data->tablero = tablero;
 			thread_data->N = N;
 			thread_data->M = M;
@@ -224,34 +224,36 @@ int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, in
 //
 void *ubicar(void *arg)
 {
-	enterSC(mutex);
 	int w;
 	hebra *thread_data = (hebra *) arg;
-	printf("Hola, soy la hebra %d \n", (int) thread_data->tid);
+	//printf("Hola, soy la hebra %d \n", (int) thread_data->tid);
 	//pthread_mutex_lock(&mutex);
-	
+	pthread_mutex_lock(&mutex);
 	printf("Hebra %d entró a SC\n", (int) thread_data->tid);
 	for (w = 0; w < thread_data->cantidadPalabras ; ++w){
-		insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
-		thread_data->coordenadas[w].posY);
+		//insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
+		//thread_data->coordenadas[w].posY);
+		insertarPalabra(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
+						thread_data->coordenadas[w].posY, thread_data->N, thread_data->M);
 		printf("inserte la palabra: %s \n",thread_data->palabra[w]);
 		printTablero(thread_data->tablero, thread_data->N, thread_data->M);
 	}
 	//pthread_mutex_unlock(&mutex);
 	
 	free(thread_data);		//se libera mem
-	exitSC(mutex);
+	pthread_mutex_unlock(&mutex);
 }
 
 void enterSC(pthread_mutex_t mutex)
 {
-	while(pthread_mutex_trylock(&mutex)==0)
-	{}
+	//while(pthread_mutex_trylock(&mutex)!=0)
+	printf("%d\n", pthread_mutex_lock(&mutex));
 }
 
 void exitSC(pthread_mutex_t mutex)
 {
 	pthread_mutex_unlock(&mutex);
+	printf("salí de la SC");
 }
 
 int countLines(char *fileName, int lineSize)	//Función que cuenta las lineas del archivo de entrada
