@@ -15,11 +15,8 @@ typedef struct {
      pthread_mutex_t	*mutexHilo;
 }hebra;
 
-//pthread_mutex_t mutex;	//mutex global, solo para testear.
-//Se crea el mutex
 
-
-pthread_mutex_t **mutex;
+pthread_mutex_t **mutex;	//Inicialización mutex
 
 
 char **crearTableroDinamico(int N, int M);
@@ -251,7 +248,7 @@ void *ubicar(void *arg)
 			thread_data->coordenadas[w].posX= rand() % thread_data->N;
 			thread_data->coordenadas[w].posY=rand() % thread_data->M;
 			thread_data->mutexHilo[w] = mutex[thread_data->coordenadas[w].posX][thread_data->coordenadas[w].posY];
-			if(pthread_mutex_trylock(&thread_data->mutexHilo[w])==0) break;
+			if(pthread_mutex_trylock(&thread_data->mutexHilo[w])==0 && validarPosicionInicial(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX, thread_data->coordenadas[w].posY, thread_data->N, thread_data->M)==1) break;
 		}
 
 		pthread_mutex_trylock(&thread_data->mutexHilo[w]);
