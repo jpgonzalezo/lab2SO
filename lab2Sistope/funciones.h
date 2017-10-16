@@ -118,8 +118,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	//Necesario para leer el archivo para asignar palabras
 	FILE *archivoTexto;
 	archivoTexto = fopen(file, "r");
-	char line[100];
-
+	char line[9];
 
 	//Todas las hebras tienen la misma cantidad de palabras para insertar
 	if (cantidadPalabras%numeroHebras==0){
@@ -156,8 +155,8 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			thread_data->palabra=(char**)malloc(sizeof(char*)*palabrasPorHebra);
 			for (j = 0; j < palabrasPorHebra; ++j)
 			{
-				thread_data->palabra[j]=(char*)malloc(sizeof(char)*100);
-				fgets(line, 100,archivoTexto);
+				thread_data->palabra[j]=(char*)malloc(sizeof(char)*9);
+				fgets(line, 9,archivoTexto);
 				strcpy(thread_data->palabra[j], line);
 				//printf("guarde la palabra %d: %s\n",j,thread_data->palabra[j]);
 				int posX=rand() % N-1;
@@ -214,6 +213,7 @@ int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, in
 {
 	if(validarPosicionInicial(palabra, tablero, posX, posY, N, M))
 	{
+		printf("posicion valida (%d,%d) para palabra %s\n", posX,posY,palabra);
 		insertarAuxiliar(palabra, tablero, posX, posY);
 		return 1;	//Se pudo insertar palabra
 	}
