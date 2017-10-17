@@ -150,8 +150,6 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	int impar=0;
 	int palabrasPorHebra=0;
 	
-	printf("%d\n",maxLen);
-
 	//Asignación memoria mutex global
 	mutex=(pthread_mutex_t **)malloc(sizeof(pthread_mutex_t*)*N);
 	for (int i = 0; i <N; ++i){
@@ -363,6 +361,5 @@ int getMaxLength(char *fileName)
 		if(maxLen< strlen(line)) maxLen = strlen(line);
 	}
 	fclose(file);
-	printf("MAXLEN: %d\n", maxLen);
 	return maxLen;
 }
