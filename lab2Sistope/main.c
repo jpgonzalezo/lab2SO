@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <ctype.h>
 #include "funciones.h"
+#include "funciones.c"
 
 //pthread_mutex_t mutex;	//mutex global, solo para testear.
 
@@ -52,22 +53,26 @@ int main(int argc, char **argv){
 				break;
 			case '?':
 				if (optopt == 'c')
-					fprintf (stderr, "Opción -%c requiere un argumento.\n", optopt);
+					printf ( "Opción -%c requiere un argumento.\n", optopt);
 				else if (isprint (optopt))
-				  	fprintf (stderr, "Opción desconocida `-%c'.\n", optopt);
+				  	printf ( "Opción desconocida `-%c'.\n", optopt);
 				else
-				  	fprintf (stderr,"Opción con caracter desconocido `\\x%x'.\n",optopt);
+				  	printf ("Opción con caracter desconocido `\\x%x'.\n",optopt);
 					return 1;
 				default:
 				abort ();
 		}
 	}
 
-	//Prueba de que los argumentos fueron guardados correctamente 
-	printf("numeroHebras: %d\n",numeroHebras);
-	printf("cantidadPalabras: %d\n", cantidadPalabras );
-	printf("filas: %d\n",N);
-	printf("columnas: %d\n",M);
+	//Prueba de que los argumentos fueron guardados correctamente
+	if (bandera==1)
+	{
+		printf("numeroHebras: %d\n",numeroHebras);
+		printf("cantidadPalabras: %d\n", cantidadPalabras );
+		printf("filas: %d\n",N);
+		printf("columnas: %d\n",M);
+	}
+
 
 	srand((unsigned)time(NULL));		//seed para usar rand aleatorio
 
@@ -81,9 +86,7 @@ int main(int argc, char **argv){
 
 	//Se crean las hebras
 	pthread_t threads[numeroHebras];
-	printf("creando hebras\n");
-	crearHebras(threads, numeroHebras, tablero, N, M, nameArchivo, cantidadPalabras);
-	printf("termine de crear hebras\n");
+	crearHebras(threads, numeroHebras, tablero, N, M, nameArchivo, cantidadPalabras, bandera);
 
 
 
@@ -93,12 +96,11 @@ int main(int argc, char **argv){
 		waitHebras(threads, numeroHebras);
 	}
 
-	printf("Hebras terminaron\n");
 
-	//insertarPalabra("MANZANA", tablero, 2, 3, N, M);
-	//insertarPalabra("HOLA", tablero, 2, 1, N, M);
-	//printf("--------------------\n");
-	printTablero(tablero, N, M);
+	printf("\n");
+	printf("\n");
+	//printTablero(tablero, N, M,bandera);
+	printTableroArchivo(tablero,N,M,salida);
 	
 
 
