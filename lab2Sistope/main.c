@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <ctype.h>
 #include "funciones.h"
 
 //pthread_mutex_t mutex;	//mutex global, solo para testear.

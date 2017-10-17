@@ -31,6 +31,7 @@ void *ubicar(void *arg);
 int countLines(char *fileName, int lineSize);
 void enterSC(pthread_mutex_t mutex);
 void exitSC(pthread_mutex_t mutex);
+void strMayus(char *str);
 
 //Descripción: Función que crea el tablero base en el cual se irán insertando las palabras por las hebras
 //Entradas: la cantidad de filas (N) y la cantidad de columnas (M) que debe poseer el tablero
@@ -171,8 +172,8 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 				fgets(line, 100,archivoTexto);
 				printf("palabra obtenida desde el archivo %s\n",line);
 				line[strcspn(line, "\n")] = 0;
-				strcpy(thread_data->palabra[j], line);
-				//printf("guarde la palabra %d: %s\n",j,thread_data->palabra[j]);
+				strMayus(line);		//Se pasa la palabra a mayúsculas
+				strcpy(thread_data->palabra[j], line);	
 				int posX=rand() % N;
 				int posY=rand()	% M;
 				thread_data->coordenadas[j].posX=posX;
@@ -227,6 +228,16 @@ int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, in
 	}
 
 	return 0;		//No se pudo insertar palabra
+}
+
+//Función que transforma un string a mayusculas.
+void strMayus(char *str)
+{
+	int i = 0;
+	while(str[i]) {
+		str[i] = putchar(toupper(str[i]));
+		i++;
+	}
 }
 
 //
