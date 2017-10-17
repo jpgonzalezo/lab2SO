@@ -82,6 +82,22 @@ void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY){
 	}
 }
 
+//Descripción: Funcíón que reemplaza un substring por otro, se utilizará para eliminar las ñ si existen
+//para evitar problemas de codificación al imprimir los resultados
+//Entrada: string, substring a reemplazar y substring a colocar
+//Salida: el string modificado
+char *replaceSubstr(char *str, char *orig, char *rep)
+{
+	static char buffer[4096];
+	char *p;
+	p = strstr(str, orig);
+	strncpy(buffer, str, p-str);
+	buffer[p-str] = '\0';
+	sprintf(buffer+(p-str), "%s%s", rep, p+strlen(orig));
+	return buffer;
+}
+
+
 //Descripcion: Función que impreme un tablero
 //Entrada: el tablero a imprimir , la cantidad de filas y columnas que posee y una bandera que identifica en caso de que se quiera mostrar o no
 //Salida: no posee salida
@@ -161,10 +177,6 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 		palabrasPorHebra=cantidadPalabras/numeroHebras;
 	}
 
-
-
-
-//caso contrario se deben guardar las palabras para la hebra
 	printf("\n");
 	while(i < numeroHebras){
 		hebra *thread_data;
@@ -175,7 +187,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 		int contadorPalabras=0;
 
 		if (impar==1 && i==numeroHebras-1){
-			palabrasPorHebra=palabrasPorHebra+1;
+			palabrasPorHebra = palabrasPorHebra + cantidadPalabras%numeroHebras;
 		}
 
 		thread_data->coordenadas=(coordenada*)malloc(sizeof(char)*palabrasPorHebra);
@@ -185,6 +197,17 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			thread_data->palabra[j]=(char*)malloc(sizeof(char)*maxLen);
 			fgets(line, maxLen,archivoTexto);
 			line[strcspn(line, "\n")] = 0;		//Se quita el salto de linea en caso de existir
+			if(strstr(line,"ñ")!=0)				//Se reemplaza ñ existenes por N para evitar conflictos
+												//con codificación
+				{
+					printf("%s - ", line);
+					long int index = strcspn(line, "ñ");
+					while(strstr(line,"ñ")!=0)
+					{
+						strcpy(line, replaceSubstr(line, "ñ", "N"));
+					}
+				}
+
 			strMayus(line);		//Se pasa la palabra a mayúsculas
 			strcpy(thread_data->palabra[j], line);	
 			int posX=rand() % N;	//se obtiene posicion aleatoria
@@ -194,7 +217,6 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 
 		}
 
-		//printf("guarde la palabra2: %s\n", thread_data->palabra[0]);
 		thread_data->tablero = tablero;
 		thread_data->N = N;
 		thread_data->M = M;
@@ -205,13 +227,12 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			printf("Hebra con id: %d\n", (int )thread_data->tid);
 			printf("Se le asignan las palabras:\n");
 			for (int z = 0; z < palabrasPorHebra; ++z){
-				printf("%d - %d: %s\n",z,(int)thread_data->palabra[z][2], thread_data->palabra[z] );
+				printf("%d: %s\n",z, thread_data->palabra[z] );
 			}
 		}
 
 		thread_data->mutexHilo = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t)*palabrasPorHebra);
 		threads_data[i]=thread_data;
-		//pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
 		i++;
 	}
 	fclose(archivoTexto);		
@@ -265,7 +286,14 @@ void strMayus(char *str)
 	}
 }
 
-//Descripcion: funcion que ubica las palabras dentro de un tablero
+//Descripcion: funcion que ubica las palabras dentro de un tablero.
+//Explicación: se realizan las validaciones iniciales con validarPosicionInicialy se maneja la sección crítica con funciones trylock,
+//de esta forma las hebras solo podrán ingresar a la sección critica cuando no haya ninguna hebra en ella, 
+//caso contrario se quedaran intentando bloquear el mutex constantemente (ya que en caso de que una hebra se encuentre en la sección 
+//critica el mutex estará bloqueado y por tanto la nueva hebra no podrá bloquearlo nuevamente [por esta razón se utiliza trylock en especial])
+//hasta que la hebra que se encuentra en sección crítica utilizando el recurso salga y desbloquee el mutex.
+//Si la hebra que salió no logró modificar el recurso la nueva hebra podrá ingresar a intentar insertar la palabra correspondiente,
+//en el caso contrario buscará nueva posición para intentar, si es que no la cambío anteriormente.
 //Entrada: argumentos que en este caso es una lista de hebras
 //Salida: no posee retorno
 void *ubicar(void *arg)
@@ -285,6 +313,7 @@ void *ubicar(void *arg)
 			if(pthread_mutex_trylock(&thread_data->mutexHilo[w])==0 && validarPosicionInicial(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX, thread_data->coordenadas[w].posY, thread_data->N, thread_data->M)==1) break;
 		}
 
+		//
 		pthread_mutex_trylock(&thread_data->mutexHilo[w]);
 		insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX, thread_data->coordenadas[w].posY);
 		pthread_mutex_unlock(&thread_data->mutexHilo[w]);
@@ -298,7 +327,6 @@ void *ubicar(void *arg)
 		}
 		
 	}
-	//pthread_exit();
 }
 
 //Descripcion: funcion que permite contar la cantidad de lineas que posee escrita un archivo 
@@ -332,9 +360,16 @@ int getMaxLength(char *fileName)
 	while(feof(file)==0)
 	{
 		fgets(line, sizeof(line),file);
+		if(strstr(line,"ñ")!=0)
+		{
+			//while(strstr(line,"ñ")!=0)
+			{
+				//strcpy(line, replaceSubstr(line, "ñ", "N"));
+			}
+		}
 		if(maxLen< strlen(line)) maxLen = strlen(line);
 	}
 	fclose(file);
-	printf("%d\n",maxLen);
+	printf("maxlen: %d\n",maxLen);
 	return maxLen;
 }

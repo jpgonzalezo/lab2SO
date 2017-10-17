@@ -79,19 +79,21 @@ int main(int argc, char **argv){
 		printf("Esto no afectará el resultado final que siempre se imprimirá correctamente\n");
 		printf("tanto por consola como en el archivo de salida.\n");
 		printf("-----------------------------------------------------------------------------\n");
-		printf("numeroHebras: %d\n",numeroHebras);
-		printf("cantidadPalabras: %d\n", cantidadPalabras );
-		printf("filas: %d\n",N);
-		printf("columnas: %d\n",M);
+		printf("Hebras: %d\n",numeroHebras);
+		printf("Palabras: %d\n", cantidadPalabras );
+		printf("Filas: %d\n",N);
+		printf("Columnas: %d\n",M);
 		printf("-----------------------------------------------------------------------------\n");
 	}	
 
 	//Capturando errores
 	int error = 0;
-	int palabrasArchivo= countLines(nameArchivo, 4096);
+	int palabrasArchivo = countLines(nameArchivo, 4096);
+	int maxLen = getMaxLength(nameArchivo);	//
 
 	//Si el numero de hebras es mayor que la cantidad de palabras existentes entonces hay un error
-	if (numeroHebras>cantidadPalabras || palabrasArchivo!=cantidadPalabras){
+	if (numeroHebras>cantidadPalabras || palabrasArchivo!=cantidadPalabras)
+	{
 		printf("ERROR: El número de hebras es mayor que el número de palabras.\n");
 		error = 1;
 	}
@@ -104,36 +106,34 @@ int main(int argc, char **argv){
 
 	//creación del tablero a partir de las dimensiones de entrada
 	tablero = crearTableroDinamico(N,M);
-	//printTablero(tablero, N, M);
 
 
 
 
 	//Se crean las hebras
-	int maxLen = getMaxLength(nameArchivo) + 2;	//
-	char buffer[4096];
-	maxLen = sizeof(buffer);
 	pthread_t threads[numeroHebras];
 	crearHebras(threads, numeroHebras, tablero, N, M, nameArchivo, cantidadPalabras, bandera, maxLen);
 
 
 
 
-	//El hilo main espera que terminen las hebras
+	//El main espera que terminen las hebras
 	waitHebras(threads, numeroHebras);
 
 	//Se rellenan las posiciones nulas restantes del tablero
 	tablero = fillTablero(tablero, N, M);
 
 
+	//Se imprime resultado final por pantalla si se ingresó el flag -d
 	if(bandera==1)
-		{
-			for(int i=0; i<N; i++) printf("-");
-			printf("\n");
-			printf("Proceso finalizado, a continuación se presenta la sopa de letras final:\n");
-			printTablero(tablero, N, M,bandera);
-		}
+	{
+		for(int i=0; i<N; i++) printf("-");
+		printf("\n");
+		printf("Proceso finalizado, a continuación se presenta la sopa de letras final:\n");
+		printTablero(tablero, N, M,bandera);
+	}
 
+	//Se imprime el tablero en el archivo de salida
 	printTableroArchivo(tablero,N,M,salida);
 	
 

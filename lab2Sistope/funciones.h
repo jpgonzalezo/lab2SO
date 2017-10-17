@@ -36,3 +36,4 @@ void exitSC(pthread_mutex_t mutex);
 void strMayus(char *str);
 char **fillTablero(char **tablero, int N, int M);
 int getMaxLength(char *fileName);
+char *replaceSubstr(char *str, char *orig, char *rep);
