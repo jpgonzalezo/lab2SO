@@ -7,12 +7,15 @@
 #include <ctype.h>
 #include "funciones.h"
 #include "funciones.c"
+#include <locale.h>
+
 
 //pthread_mutex_t mutex;	//mutex global, solo para testear.
 
 
 int main(int argc, char **argv){
-	
+
+	setlocale(LC_ALL, "");
 	char *nameArchivo = NULL;
 	int numeroHebras = 0;
 	int cantidadPalabras = 0;
@@ -27,7 +30,7 @@ int main(int argc, char **argv){
 	opterr = 0;
 	//i: archivo, h: numero de hebras, c: cantidad de palabras,
 	//n: ancho matriz, m:largo matriz s: nombreArchivoSalida d: bandera
-	while ((c = getopt (argc, argv, "i:h:c:n:m:s:d:")) != -1){
+	while ((c = getopt (argc, argv, "i:h:c:n:m:s:d")) != -1){
 
 		switch (c){
 			case 'i':
@@ -49,7 +52,7 @@ int main(int argc, char **argv){
 				salida = optarg;
 				break;
 			case 'd':
-				bandera = atoi(optarg);
+				bandera = 1;
 				break;
 			case '?':
 				if (optopt == 'c')
@@ -67,10 +70,20 @@ int main(int argc, char **argv){
 	//Prueba de que los argumentos fueron guardados correctamente
 	if (bandera==1)
 	{
+		printf("-----------------------------------------------------------------------------\n");
+		printf("Bienvenid@\n");
+		printf("Ha activado la función de impresión de resultados por pantalla\n");
+		printf("Observación: Si nota problemas de formato a medida que se modifica la sopa de letras\n");
+		printf("esto se debe a que las hebras se encuentran en proceso de inserción de palabras\n");
+		printf("mientras otra hebra ha mostrado por pantalla los cambios que ella ha realizado.\n");
+		printf("Esto no afectará el resultado final que siempre se imprimirá correctamente\n");
+		printf("tanto por consola como en el archivo de salida.\n");
+		printf("-----------------------------------------------------------------------------\n");
 		printf("numeroHebras: %d\n",numeroHebras);
 		printf("cantidadPalabras: %d\n", cantidadPalabras );
 		printf("filas: %d\n",N);
 		printf("columnas: %d\n",M);
+		printf("-----------------------------------------------------------------------------\n");
 	}
 
 
@@ -96,10 +109,19 @@ int main(int argc, char **argv){
 		waitHebras(threads, numeroHebras);
 	}
 
+	//Se rellenan las posiciones nulas restantes del tablero
+	tablero = fillTablero(tablero, N, M);
+
 
 	printf("\n");
 	printf("\n");
-	//printTablero(tablero, N, M,bandera);
+	if(bandera==1)
+		{
+			for(int i=0; i<N; i++) printf("-");
+			printf("\n");
+			printf("Proceso finalizado, a continuación se presenta la sopa de letras final:\n");
+			printTablero(tablero, N, M,bandera);
+		}
 	printTableroArchivo(tablero,N,M,salida);
 	
 

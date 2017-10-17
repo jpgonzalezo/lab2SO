@@ -24,6 +24,26 @@ char **crearTableroDinamico(int N, int M){
 	}
 }
 
+//Función que rellena los valores nulos del tablero con caracteres aleatorios
+//Entrada: Tablero y dimensiones
+//Salida: Tablero modificado
+char **fillTablero(char **tablero, int N, int M)
+{
+	int i, j;
+	for (i = 0; i <N; ++i){
+		for (j = 0; j < M; ++j){
+			if(tablero[i][j]=='0')
+			{
+				int cMin = 'a';
+				int cMax = 'a' + 25;
+				int c = rand() % (cMax + 1 - cMin) + cMin;
+				tablero[i][j] = c;
+			}
+		}
+	}
+	return tablero;
+}
+
 //Función que se encarga de validar si la posicion inicial es valida para poder inserar la palabra
 //Entrada: La palabra que se desea insertar, el tablero donde se inserta la palabra, la posicion X donde se comienza a insertar la palabra,
 //la posicion Y donde se comienza a insertar la palabra
@@ -87,7 +107,7 @@ void printTableroArchivo(char **tablero,int N,int M,char *salida){
 	if (salida !=NULL){
 		FILE *archivoSalida;
 		archivoSalida=fopen(salida,"w");
-		fprintf(archivoSalida, "TABLERO SOPA DE LETRAS\n");
+		fprintf(archivoSalida, "SOPA DE LETRAS\n");
 		fprintf(archivoSalida, "========================\n");
 		fprintf(archivoSalida, "\n");
 		fprintf(archivoSalida, "\n");
@@ -143,12 +163,11 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 
 	//Si el numero de hebras es mayor que la cantidad de palabras existentes entonces hay un error
 	if (numeroHebras>cantidadPalabras || palabrasArchivo!=cantidadPalabras){
-		printf("Error!!!!!\n");
+		printf("ERROR: El número de hebras es mayor que el número de palabras.\n");
 	}
 
 	//caso contrario se deben guardar las palabras para la hebra
 	else{
-		printf("\n");
 		printf("\n");
 		while(i < numeroHebras){
 			int j;
@@ -185,14 +204,11 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 			thread_data->cantidadPalabras=palabrasPorHebra;
 			
 			if (bandera==1){
-				printf("\n");
-				printf("hebra con id: %d\n", (int )thread_data->tid);
+				printf("Hebra con id: %d\n", (int )thread_data->tid);
 				printf("Se le asignan las palabras:\n");
 				for (int z = 0; z < palabrasPorHebra; ++z){
-					printf("%d: %s\n",z,thread_data->palabra[z] );
+					printf("%d - %d: %s\n",z,(int)thread_data->palabra[z][2], thread_data->palabra[z] );
 				}
-				printf("\n");
-				printf("\n");
 			}
 
 			//pthread_mutex_init(&thread_data->mutexHilo, NULL);
@@ -241,7 +257,8 @@ void strMayus(char *str)
 {
 	int i = 0;
 	while(str[i]) {
-		str[i] = putchar(toupper(str[i]));
+		str[i] = toupper(str[i]);
+		if(str[i]==241) str[i]=209;
 		i++;
 	}
 }
@@ -253,15 +270,10 @@ void *ubicar(void *arg)
 {
 	int w;
 	hebra *thread_data = (hebra *) arg;
-	//printf("Hola, soy la hebra %d \n", (int) thread_data->tid);
-	//pthread_mutex_lock(&mutex);
-	//pthread_mutex_lock(&mutex);
 	if (thread_data->bandera==1){
-		printf("Hebra %d entró a SC\n", (int) thread_data->tid);
+		//printf("\nHebra %d entró a SC\n", (int) thread_data->tid);
 	}
 	for (w = 0; w < thread_data->cantidadPalabras ; ++w){
-		//insertarAuxiliar(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX,
-		//thread_data->coordenadas[w].posY);
 		thread_data->mutexHilo[w] = mutex[thread_data->coordenadas[w].posX][thread_data->coordenadas[w].posY];
 		while(validarPosicionInicial(thread_data->palabra[w], thread_data->tablero, thread_data->coordenadas[w].posX, thread_data->coordenadas[w].posY, thread_data->N, thread_data->M)==0)
 		{
@@ -277,16 +289,15 @@ void *ubicar(void *arg)
 
 		if (thread_data->bandera==1)
 		{
+			printf("\nHebra %d insertará la palabra: %s \n",(int) thread_data->tid, thread_data->palabra[w]);
+			for(int i=0; i<thread_data->N; i++) printf("-");
 			printf("\n");
-			printf("inserte la palabra: %s \n",thread_data->palabra[w]);
 			printTablero(thread_data->tablero, thread_data->N, thread_data->M,thread_data->bandera);
 		}
 		
 	}
-	//pthread_mutex_unlock(&mutex);
 	
 	free(thread_data);		//se libera mem
-	//pthread_mutex_unlock(&mutex);
 }
 
 //Descripcion: fución que permite a un hebra entrar a SC

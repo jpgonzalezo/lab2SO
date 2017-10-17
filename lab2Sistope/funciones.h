@@ -34,3 +34,4 @@ int countLines(char *fileName, int lineSize);
 void enterSC(pthread_mutex_t mutex);
 void exitSC(pthread_mutex_t mutex);
 void strMayus(char *str);
+char **fillTablero(char **tablero, int N, int M);
