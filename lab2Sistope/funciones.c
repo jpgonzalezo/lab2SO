@@ -110,7 +110,6 @@ void printTableroArchivo(char **tablero,int N,int M,char *salida){
 		fprintf(archivoSalida, "SOPA DE LETRAS\n");
 		fprintf(archivoSalida, "========================\n");
 		fprintf(archivoSalida, "\n");
-		fprintf(archivoSalida, "\n");
 		for (i = 0; i < N; ++i){
 			for (j = 0; j < M; ++j){
 				fprintf(archivoSalida,"%c", tablero[i][j]);	
@@ -126,14 +125,16 @@ void printTableroArchivo(char **tablero,int N,int M,char *salida){
 // la cantidad de filas y columnas que posee el tablero el nombre del archivo de texto que posee las palabras, 
 //la cantidad de palabras que posee el archivo de texto y una bandera que identifica si los resultados son mostrados por consola
 //Salida: no posee retorno 
-void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M, char *file, int cantidadPalabras,int bandera)
+void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M, char *file, int cantidadPalabras, int bandera, int maxLen)
 {
 	
-	hebra *thread_data;
+	hebra **threads_data;
+	threads_data = malloc(sizeof(hebra)*numeroHebras);
 	int i = 0;
 	int impar=0;
 	int palabrasPorHebra=0;
-	int palabrasArchivo= countLines(file, 100);
+	
+	printf("%d\n",maxLen);
 
 	//Asignación memoria mutex global
 	mutex=(pthread_mutex_t **)malloc(sizeof(pthread_mutex_t*)*N);
@@ -148,7 +149,7 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	//Necesario para leer el archivo para asignar palabras
 	FILE *archivoTexto;
 	archivoTexto = fopen(file, "r");
-	char line[100];
+	char line[maxLen];
 
 	//Todas las hebras tienen la misma cantidad de palabras para insertar
 	if (cantidadPalabras%numeroHebras==0){
@@ -161,64 +162,65 @@ void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, i
 	}
 
 
-	//Si el numero de hebras es mayor que la cantidad de palabras existentes entonces hay un error
-	if (numeroHebras>cantidadPalabras || palabrasArchivo!=cantidadPalabras){
-		printf("ERROR: El número de hebras es mayor que el número de palabras.\n");
+
+
+//caso contrario se deben guardar las palabras para la hebra
+	printf("\n");
+	while(i < numeroHebras){
+		hebra *thread_data;
+		int j;
+		thread_data = malloc(sizeof(hebra));
+		thread_data->tid = i;
+
+		int contadorPalabras=0;
+
+		if (impar==1 && i==numeroHebras-1){
+			palabrasPorHebra=palabrasPorHebra+1;
+		}
+
+		thread_data->coordenadas=(coordenada*)malloc(sizeof(char)*palabrasPorHebra);
+		thread_data->palabra=(char**)malloc(sizeof(char*)*palabrasPorHebra);
+		for (j = 0; j < palabrasPorHebra; ++j)
+		{
+			thread_data->palabra[j]=(char*)malloc(sizeof(char)*maxLen);
+			fgets(line, maxLen,archivoTexto);
+			line[strcspn(line, "\n")] = 0;		//Se quita el salto de linea en caso de existir
+			strMayus(line);		//Se pasa la palabra a mayúsculas
+			strcpy(thread_data->palabra[j], line);	
+			int posX=rand() % N;	//se obtiene posicion aleatoria
+			int posY=rand()	% M;	//se obtiene posicion aleatoria
+			thread_data->coordenadas[j].posX=posX;
+			thread_data->coordenadas[j].posY=posY;
+
+		}
+
+		//printf("guarde la palabra2: %s\n", thread_data->palabra[0]);
+		thread_data->tablero = tablero;
+		thread_data->N = N;
+		thread_data->M = M;
+		thread_data->bandera=bandera;
+		thread_data->cantidadPalabras=palabrasPorHebra;
+		
+		if (bandera==1){
+			printf("Hebra con id: %d\n", (int )thread_data->tid);
+			printf("Se le asignan las palabras:\n");
+			for (int z = 0; z < palabrasPorHebra; ++z){
+				printf("%d - %d: %s\n",z,(int)thread_data->palabra[z][2], thread_data->palabra[z] );
+			}
+		}
+
+		thread_data->mutexHilo = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t)*palabrasPorHebra);
+		threads_data[i]=thread_data;
+		//pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
+		i++;
 	}
-
-	//caso contrario se deben guardar las palabras para la hebra
-	else{
-		printf("\n");
-		while(i < numeroHebras){
-			int j;
-			thread_data = malloc(sizeof(hebra));
-			thread_data->tid = i;
-
-			int contadorPalabras=0;
-
-			if (impar==1 && i==numeroHebras-1){
-				palabrasPorHebra=palabrasPorHebra+1;
-			}
-
-			thread_data->coordenadas=(coordenada*)malloc(sizeof(char)*palabrasPorHebra);
-			thread_data->palabra=(char**)malloc(sizeof(char*)*palabrasPorHebra);
-			for (j = 0; j < palabrasPorHebra; ++j)
-			{
-				thread_data->palabra[j]=(char*)malloc(sizeof(char)*100);
-				fgets(line, 100,archivoTexto);
-				line[strcspn(line, "\n")] = 0;
-				strMayus(line);		//Se pasa la palabra a mayúsculas
-				strcpy(thread_data->palabra[j], line);	
-				int posX=rand() % N;
-				int posY=rand()	% M;
-				thread_data->coordenadas[j].posX=posX;
-				thread_data->coordenadas[j].posY=posY;
-
-			}
-
-			//printf("guarde la palabra2: %s\n", thread_data->palabra[0]);
-			thread_data->tablero = tablero;
-			thread_data->N = N;
-			thread_data->M = M;
-			thread_data->bandera=bandera;
-			thread_data->cantidadPalabras=palabrasPorHebra;
-			
-			if (bandera==1){
-				printf("Hebra con id: %d\n", (int )thread_data->tid);
-				printf("Se le asignan las palabras:\n");
-				for (int z = 0; z < palabrasPorHebra; ++z){
-					printf("%d - %d: %s\n",z,(int)thread_data->palabra[z][2], thread_data->palabra[z] );
-				}
-			}
-
-			//pthread_mutex_init(&thread_data->mutexHilo, NULL);
-			thread_data->mutexHilo = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t)*palabrasPorHebra);
-			pthread_create(&threads[i], NULL, ubicar, (void *) thread_data);
-			i++;
-		}		
+	fclose(archivoTexto);		
+	i = 0;
+	while(i<numeroHebras)
+	{
+		pthread_create(&threads[i], NULL, ubicar, (void *) threads_data[i]);
+		i++;
 	}
-
-	fclose(archivoTexto);
 
 }
 
@@ -296,26 +298,7 @@ void *ubicar(void *arg)
 		}
 		
 	}
-	
-	free(thread_data);		//se libera mem
-}
-
-//Descripcion: fución que permite a un hebra entrar a SC
-//Entrada: el mutex global
-//Salida: no posee retorno
-void enterSC(pthread_mutex_t mutex)
-{
-	//while(pthread_mutex_trylock(&mutex)!=0)
-	printf("%d\n", pthread_mutex_lock(&mutex));
-}
-
-//Descripcion: funcion que permite liberar SC
-//Entrada: mutex global
-//Salida: no posee retorno
-void exitSC(pthread_mutex_t mutex)
-{
-	pthread_mutex_unlock(&mutex);
-	printf("salí de la SC");
+	//pthread_exit();
 }
 
 //Descripcion: funcion que permite contar la cantidad de lineas que posee escrita un archivo 
@@ -335,4 +318,23 @@ int countLines(char *fileName, int lineSize)	//Función que cuenta las lineas de
 	}
 	fclose(file);
 	return count-1;
+}
+
+
+int getMaxLength(char *fileName)
+{
+	FILE *file;
+	file = fopen(fileName, "r");
+	int count = 0;
+	char line[4096];
+	char c;
+	int maxLen = 0;
+	while(feof(file)==0)
+	{
+		fgets(line, sizeof(line),file);
+		if(maxLen< strlen(line)) maxLen = strlen(line);
+	}
+	fclose(file);
+	printf("%d\n",maxLen);
+	return maxLen;
 }

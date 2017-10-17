@@ -25,7 +25,7 @@ int validarPosicionInicial(char *palabra, char **tablero, int posicionX, int pos
 void insertarAuxiliar(char *palabra, char **tablero, int posX, int posY);
 void printTablero(char **tablero, int N, int M, int bandera);
 void printTableroArchivo(char **tablero,int N,int M,char *salida);
-void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M,char *file, int cantidadPalabras, int bandera);
+void crearHebras(pthread_t threads[], int numeroHebras, char **tablero, int N, int M,char *file, int cantidadPalabras, int bandera, int maxLen);
 void *threadTest(void *arg);
 void waitHebras(pthread_t threads[], int numeroHebras);
 int insertarPalabra(char *palabra, char** tablero, int posX, int posY, int N, int M);
@@ -35,3 +35,4 @@ void enterSC(pthread_mutex_t mutex);
 void exitSC(pthread_mutex_t mutex);
 void strMayus(char *str);
 char **fillTablero(char **tablero, int N, int M);
+int getMaxLength(char *fileName);

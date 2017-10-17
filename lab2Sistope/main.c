@@ -84,11 +84,23 @@ int main(int argc, char **argv){
 		printf("filas: %d\n",N);
 		printf("columnas: %d\n",M);
 		printf("-----------------------------------------------------------------------------\n");
+	}	
+
+	//Capturando errores
+	int error = 0;
+	int palabrasArchivo= countLines(nameArchivo, 4096);
+
+	//Si el numero de hebras es mayor que la cantidad de palabras existentes entonces hay un error
+	if (numeroHebras>cantidadPalabras || palabrasArchivo!=cantidadPalabras){
+		printf("ERROR: El número de hebras es mayor que el número de palabras.\n");
+		error = 1;
 	}
+
+	if(error==1) return 1;
+
 
 
 	srand((unsigned)time(NULL));		//seed para usar rand aleatorio
-
 
 	//creación del tablero a partir de las dimensiones de entrada
 	tablero = crearTableroDinamico(N,M);
@@ -98,23 +110,22 @@ int main(int argc, char **argv){
 
 
 	//Se crean las hebras
+	int maxLen = getMaxLength(nameArchivo) + 2;	//
+	char buffer[4096];
+	maxLen = sizeof(buffer);
 	pthread_t threads[numeroHebras];
-	crearHebras(threads, numeroHebras, tablero, N, M, nameArchivo, cantidadPalabras, bandera);
+	crearHebras(threads, numeroHebras, tablero, N, M, nameArchivo, cantidadPalabras, bandera, maxLen);
 
 
 
 
 	//El hilo main espera que terminen las hebras
-	if (numeroHebras<cantidadPalabras){
-		waitHebras(threads, numeroHebras);
-	}
+	waitHebras(threads, numeroHebras);
 
 	//Se rellenan las posiciones nulas restantes del tablero
 	tablero = fillTablero(tablero, N, M);
 
 
-	printf("\n");
-	printf("\n");
 	if(bandera==1)
 		{
 			for(int i=0; i<N; i++) printf("-");
@@ -122,6 +133,7 @@ int main(int argc, char **argv){
 			printf("Proceso finalizado, a continuación se presenta la sopa de letras final:\n");
 			printTablero(tablero, N, M,bandera);
 		}
+
 	printTableroArchivo(tablero,N,M,salida);
 	
 
