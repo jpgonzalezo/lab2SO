@@ -360,16 +360,9 @@ int getMaxLength(char *fileName)
 	while(feof(file)==0)
 	{
 		fgets(line, sizeof(line),file);
-		if(strstr(line,"ñ")!=0)
-		{
-			//while(strstr(line,"ñ")!=0)
-			{
-				//strcpy(line, replaceSubstr(line, "ñ", "N"));
-			}
-		}
 		if(maxLen< strlen(line)) maxLen = strlen(line);
 	}
 	fclose(file);
-	printf("maxlen: %d\n",maxLen);
+	printf("MAXLEN: %d\n", maxLen);
 	return maxLen;
 }
