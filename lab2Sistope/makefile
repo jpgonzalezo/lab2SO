@@ -4,10 +4,10 @@ DIR_SRC = ./source
 NOMBRE_EJECUTABLE = lab2
 NOMBRE_SRC = main.c
 
-all: lab1
+all: lab2
 
-# Compilación de lab1 (coordinador) y el comparador.
-lab1:
+
+lab2:
 	@echo 'Compilando lab2'
 	mkdir -p $(DIR_OUTPUT)
 	gcc $(DIR_SRC)/$(NOMBRE_SRC) -o $(DIR_OUTPUT)/$(NOMBRE_EJECUTABLE) -pthread
